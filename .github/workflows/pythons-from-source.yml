@@ -1,0 +1,116 @@
+name: Run stuff on CPython from source
+
+on:
+  workflow_dispatch:
+    inputs:
+      cpython_repository:
+        description: CPython repository to check out
+        required: true
+        default: python/cpython
+      cpython_ref:
+        description: Branch, tag, or commit to check out
+        required: true
+        default: main
+      configure_options:
+        description: Extra ./configure options for Linux and macOS
+        required: false
+        default: ''
+      make_options:
+        description: Extra make options for Linux and macOS
+        required: false
+        default: ''
+      pcbuild_options:
+        description: Extra PCbuild/build.bat options for Windows
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run-stuff:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+        - ubuntu-latest
+        - macos-latest
+        - windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+
+    - name: Checkout CPython
+      uses: actions/checkout@v7
+      with:
+        repository: ${{ inputs.cpython_repository }}
+        ref: ${{ inputs.cpython_ref }}
+        path: cpython
+        persist-credentials: false
+
+    - name: Set up MSVC
+      if: runner.os == 'Windows'
+      uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Restore ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: cpython-${{ matrix.os }}
+        max-size: 1G
+
+    - name: Set up ccache for MSBuild
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        $wrapper = Join-Path $env:RUNNER_TEMP ccache-wrapper
+        New-Item -ItemType Directory -Force $wrapper | Out-Null
+        Copy-Item (Get-Command ccache.exe).Source (Join-Path $wrapper cl.exe)
+        "CLToolExe=cl.exe" >> $env:GITHUB_ENV
+        "CLToolPath=$wrapper\" >> $env:GITHUB_ENV
+        "TrackFileAccess=false" >> $env:GITHUB_ENV
+        "UseMultiToolTask=true" >> $env:GITHUB_ENV
+
+    - name: Configure CPython
+      if: runner.os != 'Windows'
+      working-directory: cpython
+      shell: bash
+      env:
+        CONFIGURE_OPTIONS: ${{ inputs.configure_options }}
+      run: eval "./configure ${CONFIGURE_OPTIONS} CC='ccache cc'"
+
+    - name: Build CPython
+      if: runner.os != 'Windows'
+      working-directory: cpython
+      shell: bash
+      env:
+        MAKE_OPTIONS: ${{ inputs.make_options }}
+      run: eval "make -j2 ${MAKE_OPTIONS}"
+
+    - name: Build CPython
+      if: runner.os == 'Windows'
+      working-directory: cpython
+      shell: cmd
+      env:
+        PCBUILD_OPTIONS: ${{ inputs.pcbuild_options }}
+      run: PCbuild\build.bat %PCBUILD_OPTIONS%
+
+    - name: Run stuff
+      if: runner.os == 'Linux'
+      run: cpython/python stuff.py
+
+    - name: Run stuff
+      if: runner.os == 'macOS'
+      run: cpython/python.exe stuff.py
+
+    - name: Run stuff
+      if: runner.os == 'Windows'
+      shell: cmd
+      run: cpython\python.bat stuff.py
+
