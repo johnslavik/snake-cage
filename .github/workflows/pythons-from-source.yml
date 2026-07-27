@@ -74,6 +74,7 @@ jobs:
         Copy-Item (Get-Command ccache.exe).Source (Join-Path $wrapper cl.exe)
         "CLToolExe=cl.exe" >> $env:GITHUB_ENV
         "CLToolPath=$wrapper\" >> $env:GITHUB_ENV
+        "DebugInformationFormat=OldStyle" >> $env:GITHUB_ENV
         "TrackFileAccess=false" >> $env:GITHUB_ENV
         "UseMultiToolTask=true" >> $env:GITHUB_ENV
 
@@ -112,5 +113,6 @@ jobs:
     - name: Run stuff
       if: runner.os == 'Windows'
       shell: cmd
-      run: cpython\python.bat stuff.py
-
+      env:
+        PYTHONWARNINGS: default
+      run: call cpython\python.bat stuff.py
