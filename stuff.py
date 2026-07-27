@@ -7,10 +7,11 @@ def _Local__del__(self, _warn=warn, _ptb=print_tb):
     loop = self._loop
     if loop and not loop.is_closed():
         _warn(f"unclosed event loop {loop!r}", ResourceWarning, source=loop)
-        if not self.is_running():
+        if not loop.is_running():
             try:
-                self.close()
+                loop.close()
             except Exception as e:
+                print(e, "===", sep="\n")
                 _ptb(exc.__traceback__)
 
 _Local.__del__ = _Local__del__
