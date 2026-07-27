@@ -11,7 +11,7 @@ def _Local__del__(self, _warn=warn, _ptb=print_tb):
             try:
                 loop.close()
             except Exception as exc:
-                print(e, "===", sep="\n")
+                print(exc, "===", sep="\n")
                 _ptb(exc.__traceback__)
 
 _Local.__del__ = _Local__del__
