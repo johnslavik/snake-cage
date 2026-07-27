@@ -1,5 +1,5 @@
-on: push
-name: Run stuff on Python
+on: workflow_dispatch
+name: Run stuff on releasaed Pythons
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
