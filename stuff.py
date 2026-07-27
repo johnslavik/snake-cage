@@ -10,7 +10,7 @@ def _Local__del__(self, _warn=warn, _ptb=print_tb):
         if not loop.is_running():
             try:
                 loop.close()
-            except Exception as e:
+            except Exception as exc:
                 print(e, "===", sep="\n")
                 _ptb(exc.__traceback__)
 
