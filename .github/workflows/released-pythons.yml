@@ -1,6 +1,5 @@
 on: push
-name: Run stuff
-
+name: Run stuff on Python
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -22,13 +21,12 @@ jobs:
         - ubuntu-latest
         - macos-latest
         python:
-        - '3.9'
         - '3.10'
         - '3.11'
         - '3.12'
         - '3.13'
         - '3.14'
-        - '3.15.0-alpha.1'
+        - '3.15.0-beta.4'
 
     steps:
     - name: Checkout code
